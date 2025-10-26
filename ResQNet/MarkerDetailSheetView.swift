@@ -10,9 +10,7 @@ struct MarkerDetailSheetView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
-                // Header mit Marker-Icon und Typ
                 VStack(spacing: 16) {
-                    // Icon
                     ZStack {
                         Circle()
                             .fill(marker.markerType.color.opacity(0.2))
@@ -23,7 +21,6 @@ struct MarkerDetailSheetView: View {
                             .foregroundColor(marker.markerType.color)
                     }
                     
-                    // Titel und Zeitstempel
                     VStack(spacing: 8) {
                         Text(marker.markerType.label)
                             .font(.title2)
@@ -39,9 +36,7 @@ struct MarkerDetailSheetView: View {
                 .frame(maxWidth: .infinity)
                 .background(.ultraThinMaterial)
                 
-                // Content
                 VStack(spacing: 20) {
-                    // Nachricht
                     if let message = marker.message, !message.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
                             Label("Nachricht", systemImage: "message.fill")
@@ -59,7 +54,6 @@ struct MarkerDetailSheetView: View {
                         }
                     }
                     
-                    // Koordinaten
                     VStack(alignment: .leading, spacing: 8) {
                         Label("Koordinaten", systemImage: "mappin.and.ellipse")
                             .font(.headline)
@@ -79,9 +73,7 @@ struct MarkerDetailSheetView: View {
                         )
                     }
                     
-                    // Aktionen
                     VStack(spacing: 12) {
-                        // Apple Maps Navigation Button
                         Button(action: openInAppleMaps) {
                             HStack {
                                 Image(systemName: "map.fill")
@@ -99,7 +91,6 @@ struct MarkerDetailSheetView: View {
                             )
                         }
                         
-                        // Koordinaten teilen
                         Button(action: shareCoordinates) {
                             HStack {
                                 Image(systemName: "square.and.arrow.up")
@@ -115,7 +106,6 @@ struct MarkerDetailSheetView: View {
                             )
                         }
                         
-                        // Löschen Button
                         Button(action: { showingDeleteAlert = true }) {
                             HStack {
                                 Image(systemName: "trash.fill")
@@ -159,14 +149,11 @@ struct MarkerDetailSheetView: View {
     private func openInAppleMaps() {
         let coordinate = marker.coordinate.clLocationCoordinate2D
         
-        // Use the new iOS 26.0+ APIs
         let mapItem: MKMapItem
         if #available(iOS 26.0, *) {
-            // Use the new location-based initializer
             let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
             mapItem = MKMapItem(location: location, address: nil)
         } else {
-            // Fallback for older iOS versions
             let placemark = MKPlacemark(coordinate: coordinate)
             mapItem = MKMapItem(placemark: placemark)
         }

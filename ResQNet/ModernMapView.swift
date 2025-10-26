@@ -20,10 +20,8 @@ struct ModernMapView: View {
     @State private var filterByType: MarkerType? = nil
     @State private var currentFilteredIndex = 0
     
-    // Quick access marker types
     private let quickMarkers: [MarkerType] = [.medAidNeed, .medAidOffer, .water, .danger]
     
-    // Gefilterte Marker
     private var filteredMarkers: [MapMarker] {
         if let filter = filterByType {
             return markerStore.markers.filter { $0.markerType == filter }
@@ -33,7 +31,6 @@ struct ModernMapView: View {
     
     var body: some View {
         ZStack {
-            // Karte als Hintergrund
             ModernMapViewRepresentable(
                 region: $region,
                 markers: filteredMarkers,
@@ -41,17 +38,13 @@ struct ModernMapView: View {
             )
             .ignoresSafeArea(.all)
             
-            // Obere Statusleiste
             VStack {
                 HStack {
-                    // Bluetooth Status
                     BluetoothStatusView(isConnected: comboManager.host.isPoweredOn && comboManager.host.isAdvertising)
                     
                     Spacer()
                     
-                    // Filter Controls
                     HStack(spacing: 8) {
-                        // Filter Dropdown
                         Menu {
                             Button(action: {
                                 filterByType = nil
@@ -73,7 +66,6 @@ struct ModernMapView: View {
                                     filterByType = markerType
                                     currentFilteredIndex = 0
                                     
-                                    // Automatisch auf ersten Marker des gewählten Typs fokussieren
                                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                         if !filteredMarkers.isEmpty {
                                             focusOnMarker(filteredMarkers[0])

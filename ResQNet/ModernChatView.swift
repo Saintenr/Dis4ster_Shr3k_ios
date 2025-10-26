@@ -208,7 +208,6 @@ struct MessageInputView: View {
             Divider()
             
             HStack(spacing: 12) {
-                // Text Input
                 TextField("Nachricht schreiben...", text: $messageText, axis: .vertical)
                     .textFieldStyle(.plain)
                     .lineLimit(1...5)
@@ -225,7 +224,6 @@ struct MessageInputView: View {
                         isTextFieldFocused = false
                     }
                 
-                // Send Button
                 Button(action: {
                     onSend()
                     isTextFieldFocused = false
@@ -256,7 +254,6 @@ struct ConnectionDetailView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 20) {
-                // Status Card
                 VStack(spacing: 16) {
                     Image(systemName: "antenna.radiowaves.left.and.right")
                         .font(.system(size: 50))
@@ -279,7 +276,6 @@ struct ConnectionDetailView: View {
                         .fill(.ultraThinMaterial)
                 )
                 
-                // Statistics
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Verbindungsstatistiken")
                         .font(.headline)

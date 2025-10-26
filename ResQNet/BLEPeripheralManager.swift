@@ -3,21 +3,18 @@ import CoreBluetooth
 import Combine
 
 final class BLEPeripheralManager: NSObject, ObservableObject, CBPeripheralManagerDelegate {
-    // Public
     @Published var isAdvertising = false
     @Published var isPoweredOn = false
     @Published var log: [String] = []
-    @Published var messages: [String] = []   // eingehend vom Central
+    @Published var messages: [String] = []
     @Published var subscriberCount: Int = 0
 
-
-    // CoreBluetooth
     private var pm: CBPeripheralManager!
-    private var txCharacteristic: CBMutableCharacteristic! // notify (Peripheral → Central)
-    private var rxCharacteristic: CBMutableCharacteristic! // write / writeNR (Central → Peripheral)
+    private var txCharacteristic: CBMutableCharacteristic!
+    private var rxCharacteristic: CBMutableCharacteristic!
 
-    private var subscribedCentrals: [CBCentral] = []       // aktuell abonnierte Centrals
-    private var pendingChunks: [Data] = []                 // wartende Chunks, falls Puffer voll
+    private var subscribedCentrals: [CBCentral] = []
+    private var pendingChunks: [Data] = []
     
 
     override init() {
@@ -25,7 +22,6 @@ final class BLEPeripheralManager: NSObject, ObservableObject, CBPeripheralManage
         pm = CBPeripheralManager(delegate: self, queue: .main)
     }
 
-    // MARK: - Lifecycle
     func start() {
         guard isPoweredOn else { return }
         setupServiceIfNeeded()
@@ -44,30 +40,26 @@ final class BLEPeripheralManager: NSObject, ObservableObject, CBPeripheralManage
         log.append("Advertising gestoppt.")
     }
 
-    // MARK: - Messaging (Peripheral → Central über TX notify)
+    // MARK: - Messaging
     func send(_ text: String) {
-        // 1) Frame mit Zeitstempel + Location bauen
         let frame = ChatFrame.make(text: text, from: LocalID.value)
         guard let data = ChatCodec.encode(frame) else {
-            log.append("TX Fehler: Encoding fehlgeschlagen")
+            log.append("TX Error: Encoding fehlgeschlagen")
             return
         }
 
-        // 2) An abonnierende Centrals senden (Notify über txCharacteristic)
         guard let tx = txCharacteristic else {
             log.append("TX abgebrochen: keine TX-Characteristic")
             return
         }
 
-        // iOS sendet per updateValue – ggf. in kleinen Stücken, falls nötig
         var offset = 0
-        let mtu = 180 // konservativer Chunk (CBPeripheralManager hat keine direkte mtu-Eigenschaft)
+        let mtu = 180
         while offset < data.count {
             let len = min(mtu, data.count - offset)
             let chunk = data.subdata(in: offset..<(offset+len))
             let ok = pm.updateValue(chunk, for: tx, onSubscribedCentrals: nil)
             if !ok {
-                // Sendepuffer voll → minimal verzögert erneut
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
                     _ = self?.pm.updateValue(chunk, for: tx, onSubscribedCentrals: nil)
                 }
@@ -75,7 +67,6 @@ final class BLEPeripheralManager: NSObject, ObservableObject, CBPeripheralManage
             offset += len
         }
 
-        // 3) UI-Chat & Log aktualisieren
         DispatchQueue.main.async {
             self.messages.append("Ich: \(text)")
         }
@@ -109,7 +100,6 @@ final class BLEPeripheralManager: NSObject, ObservableObject, CBPeripheralManage
         log.append("Service hinzugefügt.")
     }
 
-    // MARK: - CBPeripheralManagerDelegate
     func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
         isPoweredOn = peripheral.state == .poweredOn
         log.append("PM state: \(peripheral.state.rawValue)")
@@ -153,7 +143,7 @@ final class BLEPeripheralManager: NSObject, ObservableObject, CBPeripheralManage
         if !subscribedCentrals.contains(where: { $0.identifier == central.identifier }) {
             subscribedCentrals.append(central)
         }
-        subscriberCount = subscribedCentrals.count          // ← NEU
+        subscriberCount = subscribedCentrals.count
         log.append("Central subscribed: \(central.identifier) (MTU \(central.maximumUpdateValueLength))")
     }
 
@@ -161,19 +151,19 @@ final class BLEPeripheralManager: NSObject, ObservableObject, CBPeripheralManage
                            central: CBCentral,
                            didUnsubscribeFrom characteristic: CBCharacteristic) {
         subscribedCentrals.removeAll { $0.identifier == central.identifier }
-        subscriberCount = subscribedCentrals.count          // ← NEU
+        subscriberCount = subscribedCentrals.count
         log.append("Central unsubscribed: \(central.identifier)")
     }
 
 
     func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
         for r in requests {
-            defer { pm.respond(to: r, withResult: .success) } // wir akzeptieren unsere RX-Char
+            defer { pm.respond(to: r, withResult: .success) }
             guard r.characteristic.uuid == BLEUUIDs.rxChar, let value = r.value else { continue }
 
             if let frame = ChatCodec.decode(value) {
                 if frame.from == LocalID.value {
-                    log.append("RX self-frame (ignoriert)")
+                    log.append("RX own message (ignored)")
                 } else {
                     DispatchQueue.main.async {
                         self.messages.append("Peer: \(frame.text)")

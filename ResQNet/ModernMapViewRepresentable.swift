@@ -18,7 +18,6 @@ struct ModernMapViewRepresentable: UIViewRepresentable {
     }
     
     func updateUIView(_ mapView: MKMapView, context: Context) {
-        // Update region if significantly different
         let currentRegion = mapView.region
         let threshold = 0.001
         
@@ -28,16 +27,13 @@ struct ModernMapViewRepresentable: UIViewRepresentable {
             mapView.setRegion(region, animated: true)
         }
         
-        // Update annotations
         updateAnnotations(mapView: mapView)
     }
     
     private func updateAnnotations(mapView: MKMapView) {
-        // Remove all existing annotations except user location
         let existingAnnotations = mapView.annotations.filter { !($0 is MKUserLocation) }
         mapView.removeAnnotations(existingAnnotations)
         
-        // Add new annotations
         let newAnnotations = markers.map { marker -> MarkerAnnotation in
             let annotation = MarkerAnnotation()
             annotation.coordinate = marker.coordinate.clLocationCoordinate2D
@@ -74,18 +70,15 @@ struct ModernMapViewRepresentable: UIViewRepresentable {
                 annotationView = MKAnnotationView(annotation: annotation, reuseIdentifier: identifier)
                 annotationView.canShowCallout = true
                 
-                // Custom callout accessory
                 let detailButton = UIButton(type: .detailDisclosure)
                 detailButton.tintColor = UIColor.systemBlue
                 annotationView.rightCalloutAccessoryView = detailButton
             }
             
-            // Create custom marker image
             let markerType = markerAnnotation.marker.markerType
             let markerImage = createMarkerImage(for: markerType)
             annotationView.image = markerImage
             
-            // Set anchor point
             annotationView.centerOffset = CGPoint(x: 0, y: -markerImage.size.height / 2)
             
             return annotationView
@@ -105,10 +98,8 @@ struct ModernMapViewRepresentable: UIViewRepresentable {
             let renderer = UIGraphicsImageRenderer(size: size)
             
             return renderer.image { context in
-                // Background circle
                 let rect = CGRect(origin: .zero, size: size)
                 
-                // Convert SwiftUI Color to UIColor
                 let color: UIColor
                 switch markerType.color {
                 case .red:
@@ -126,12 +117,10 @@ struct ModernMapViewRepresentable: UIViewRepresentable {
                 context.cgContext.setFillColor(color.cgColor)
                 context.cgContext.fillEllipse(in: rect)
                 
-                // White border
                 context.cgContext.setStrokeColor(UIColor.white.cgColor)
                 context.cgContext.setLineWidth(3)
                 context.cgContext.strokeEllipse(in: rect)
                 
-                // Icon
                 let iconSize: CGFloat = 20
                 let iconRect = CGRect(
                     x: (size.width - iconSize) / 2,

@@ -1,8 +1,6 @@
 import Foundation
 import UIKit
 
-
-// Lokale, stabile Geräte-ID (persistiert)
 enum LocalID {
     static let value: String = {
         if let s = UserDefaults.standard.string(forKey: "local_id") { return s }
@@ -12,8 +10,6 @@ enum LocalID {
     }()
 }
 
-
-// Codec-Helfer
 enum ChatCodec {
     static func encode(_ f: ChatFrame) -> Data? {
         try? JSONEncoder().encode(f)

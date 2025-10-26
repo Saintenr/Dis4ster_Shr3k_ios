@@ -1,7 +1,5 @@
 import SwiftUI
-import CoreBluetooth   // nötig für DeviceRow/DiscoveredPeripheral
 
-// MARK: - Moduswahl
 enum Mode: String, CaseIterable {
     case client = "Client (Central)"
     case host = "Host (Peripheral)"
@@ -28,7 +26,6 @@ struct ContentView: View {
                 }
                 .pickerStyle(.segmented)
 
-                // MARK: Client
                 if mode == .client {
                     StatusCard(isOn: central.isPoweredOn,
                                connectedName: central.connectedName,
@@ -92,7 +89,6 @@ struct ContentView: View {
                              sendText: $sendTextCentral,
                              onSend: { central.send($0) })
 
-                // MARK: Host
                 } else if mode == .host {
                     HostStatusCard(isOn: host.isPoweredOn, isAdvertising: host.isAdvertising)
 
@@ -116,7 +112,6 @@ struct ContentView: View {
                              sendText: $sendTextHost,
                              onSend: { host.send($0 + "\n") })
 
-                // MARK: Dual
                 } else if mode == .dual {
                     HostStatusCard(isOn: combo.host.isPoweredOn,
                                    isAdvertising: combo.host.isAdvertising)
@@ -138,7 +133,6 @@ struct ContentView: View {
                              onSend: { combo.send($0) })
                 }
 
-                // Log unterhalb der Inhalte
                 LogPeek(log: mode == .client ? central.log : (mode == .host ? host.log : combo.log))
             }
             .padding(.horizontal)
@@ -173,7 +167,6 @@ struct ContentView: View {
     }
 }
 
-// MARK: - Zusatz-Views (alles in dieser Datei)
 
 private struct HostStatusCard: View {
     let isOn: Bool

@@ -14,10 +14,10 @@ final class LocationProvider: NSObject, ObservableObject, CLLocationManagerDeleg
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
-        manager.distanceFilter = 5     // Update alle 5 Meter
+        manager.distanceFilter = 5
     }
 
-    // MARK: - Starten / Stoppen
+    // MARK: - Control
     func start() {
         let currentStatus = manager.authorizationStatus
         if currentStatus == .notDetermined {
@@ -48,7 +48,7 @@ final class LocationProvider: NSObject, ObservableObject, CLLocationManagerDeleg
         print("Location error:", error.localizedDescription)
     }
 
-    // MARK: - Zugriffshilfe für ChatFrame
+    // MARK: - Koordinaten-Zugriff
     static var currentCoordinate: (lat: Double?, lon: Double?, acc: Double?) {
         guard let loc = shared.lastLocation else { return (nil, nil, nil) }
         return (loc.coordinate.latitude, loc.coordinate.longitude, loc.horizontalAccuracy)

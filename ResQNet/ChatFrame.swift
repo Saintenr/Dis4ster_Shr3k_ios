@@ -1,11 +1,11 @@
 import Foundation
 
 struct ChatFrame: Codable {
-    let v: Int = 1                // Default -> Decodable klappt auch ohne Key
+    let v: Int = 1                
     let from: String
     let text: String
     let ts: TimeInterval
-    let lat: Double?              // optional: Position
+    let lat: Double?              
     let lon: Double?
     let acc: Double?
 
@@ -25,6 +25,5 @@ struct ChatFrame: Codable {
         )
     }
 
-    // v absichtlich nicht codieren (kannst du hinzufügen, wenn du es mitsenden willst)
     private enum CodingKeys: String, CodingKey { case from, text, ts, lat, lon, acc }
 }

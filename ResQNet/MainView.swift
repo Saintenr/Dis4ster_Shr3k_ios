@@ -3,13 +3,11 @@ import MapKit
 import CoreLocation
 import Combine
 
-// MARK: - Identifiable wrapper for the sheet
 private struct IdentifiedCoordinate: Identifiable {
     let id = UUID()
     var coordinate: CLLocationCoordinate2D
 }
 
-// MARK: - Main View
 struct MainView: View {
     @StateObject private var locationManager = LocationManager()
     @StateObject private var markerStore = MapMarkerStore()
@@ -20,11 +18,9 @@ struct MainView: View {
     )
     
     @State private var selectedMarker: MapMarker?
-    @State private var addMarkerDraft: IdentifiedCoordinate?   // replaces optional raw coordinate
     @State private var filterByType: MarkerType? = nil
     @State private var showingFilterSheet = false
     
-    // MARK: - UIKit Map wrapper
     struct MapView: UIViewRepresentable {
         @Binding var region: MKCoordinateRegion
         @Binding var markers: [MapMarker]
@@ -47,11 +43,9 @@ struct MainView: View {
                 mapView.setRegion(region, animated: true)
             }
             
-            // Update annotations efficiently
             let current = mapView.annotations.filter { !($0 is MKUserLocation) }
             mapView.removeAnnotations(current)
             
-            // Filter markers if a type is selected
             let filteredMarkers = filterByType == nil ? markers : markers.filter { $0.markerType == filterByType! }
             
             let newAnnotations = filteredMarkers.map { marker -> MKPointAnnotation in
@@ -63,18 +57,15 @@ struct MainView: View {
             }
             mapView.addAnnotations(newAnnotations)
             
-            // When filtering, center on the nearest marker to the user's location
             if filterByType != nil && !filteredMarkers.isEmpty, 
                let userLocation = mapView.userLocation.location {
                 
-                // Find the nearest marker to the user's location
                 let nearestMarker = filteredMarkers.min(by: { 
                     let loc1 = CLLocation(latitude: $0.coordinate.latitude, longitude: $0.coordinate.longitude)
                     let loc2 = CLLocation(latitude: $1.coordinate.latitude, longitude: $1.coordinate.longitude)
                     return userLocation.distance(from: loc1) < userLocation.distance(from: loc2)
                 })
                 
-                // If we found a marker, center the map on it with a reasonable zoom level
                 if let nearestMarker = nearestMarker {
                     let markerLocation = CLLocationCoordinate2D(
                         latitude: nearestMarker.coordinate.latitude,
@@ -100,11 +91,9 @@ struct MainView: View {
         func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
             guard !(annotation is MKUserLocation) else { return nil }
             
-            // Find the corresponding marker in our store
             let marker = parent.markers.first { marker in
                 let markerLocation = CLLocation(latitude: marker.coordinate.latitude, longitude: marker.coordinate.longitude)
                 let annotationLocation = CLLocation(latitude: annotation.coordinate.latitude, longitude: annotation.coordinate.longitude)
-                return markerLocation.distance(from: annotationLocation) < 5 // 5 meters tolerance
             }
             
             let identifier = "marker"
@@ -112,12 +101,10 @@ struct MainView: View {
                 ?? MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: identifier)
             
             if let marker = marker {
-                // Configure the marker appearance based on its type
                 view.markerTintColor = UIColor(marker.markerType.color)
                 view.glyphImage = UIImage(systemName: marker.markerType.systemImage)
                 view.glyphTintColor = .white
                 
-                // Adjust the size based on marker type if needed
                 switch marker.markerType {
                 case .danger:
                     view.displayPriority = .required
@@ -135,7 +122,6 @@ struct MainView: View {
         func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, calloutAccessoryControlTapped control: UIControl) {
             guard let annotation = view.annotation else { return }
             
-            // Safer matching (avoid exact double equality)
             let tolMeters: CLLocationDistance = 5
             let annLoc = CLLocation(latitude: annotation.coordinate.latitude, longitude: annotation.coordinate.longitude)
             
@@ -150,17 +136,14 @@ struct MainView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Map takes up the whole screen
                 MapView(region: $region, markers: $markerStore.markers, selectedMarker: $selectedMarker, filterByType: filterByType)
                     .edgesIgnoringSafeArea(.all)
                     .onAppear {
-                        // Reset filter when view appears
                         filterByType = nil
                     }
                     .onAppear {
                         locationManager.setup()
                         
-                        // Kick the region once when we first get a location
                         Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { timer in
                             if let location = locationManager.location {
                                 withAnimation {
@@ -183,7 +166,6 @@ struct MainView: View {
                         }
                     }
                 
-                // Bottom buttons overlay
                 VStack {
                     Spacer()
                     HStack(spacing: 16) {
@@ -244,7 +226,6 @@ struct MainView: View {
                         }
                         
                         Button(action: {
-                            // Capture the current map center into an Identified item.
                             addMarkerDraft = IdentifiedCoordinate(coordinate: region.center)
                         }) {
                             Text("Marker setzen")
@@ -267,14 +248,12 @@ struct MainView: View {
             }
             .navigationTitle("ResQNet")
             .toolbar {
-                // Bluetooth button on the left
                 ToolbarItem(placement: .navigationBarLeading) {
                     NavigationLink(destination: ContentView()) {
                         Image(systemName: "antenna.radiowaves.left.and.right")
                             .imageScale(.large)
                     }
                 }
-                // Refresh button on the right
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { refreshLocation() }) {
                         Image(systemName: "arrow.clockwise")
@@ -282,13 +261,11 @@ struct MainView: View {
                     }
                 }
             }
-            // Present the "add marker" flow: now robust and never nil
             .sheet(item: $addMarkerDraft) { draft in
                 AddMarkerView(coordinate: draft.coordinate, markerStore: markerStore) {
                     addMarkerDraft = nil
                 }
             }
-            // Existing detail sheet
             .sheet(item: $selectedMarker) { marker in
                 MarkerDetailView(marker: marker, markerStore: markerStore)
             }
@@ -296,7 +273,6 @@ struct MainView: View {
     }
 }
 
-// MARK: - Location Manager
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let locationManager = CLLocationManager()
     @Published var location: CLLocation?
@@ -366,7 +342,6 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
 }
 
-// MARK: - Helpers & Actions
 extension MainView {
     private func refreshLocation() {
         if let location = locationManager.location {
@@ -381,12 +356,10 @@ extension MainView {
     
     private func searchMarkersInRegion() {
         if filterByType != nil {
-            // If already filtering, turn off the filter
             filterByType = nil
             return
         }
         
-        // Show the filter sheet to select marker type
         showingFilterSheet = true
     }
 }

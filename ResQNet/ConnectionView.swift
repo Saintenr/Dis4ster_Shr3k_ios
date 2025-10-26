@@ -7,7 +7,6 @@ struct ConnectionView: View {
     var body: some View {
         NavigationView {
             List {
-                // Status Section
                 Section {
                     StatusRow(
                         title: "Bluetooth",
@@ -24,7 +23,6 @@ struct ConnectionView: View {
                     Text("Verbindungsstatus")
                 }
                 
-                // Quick Actions
                 Section {
                     if !comboManager.host.isAdvertising {
                         Button {
@@ -45,7 +43,6 @@ struct ConnectionView: View {
                     Text("Aktionen")
                 }
                 
-                // Connected Devices
                 Section {
                     if comboManager.messages.isEmpty {
                         Label("Keine aktiven Verbindungen", systemImage: "wifi.slash")
@@ -61,7 +58,6 @@ struct ConnectionView: View {
                     Text("Verbundene Geräte")
                 }
                 
-                // Statistics
                 if !comboManager.messages.isEmpty {
                     Section {
                         HStack {
@@ -82,7 +78,6 @@ struct ConnectionView: View {
                     }
                 }
                 
-                // Help & Info
                 Section {
                     NavigationLink {
                         HelpView()
@@ -106,7 +101,6 @@ struct ConnectionView: View {
         }
     }
 }
-
 // MARK: - Status Row
 struct StatusRow: View {
     let title: String
@@ -281,10 +275,9 @@ struct AdvancedSettingsView: View {
             }
         }
         .alert("Chat-Verlauf löschen", isPresented: $showingClearDataAlert) {
-            Button("Löschen", role: .destructive) {
-                // Clear chat messages
+            Button("Löschen", role: .destructive) 
                 comboManager.messages.removeAll()
-            }
+            
             Button("Abbrechen", role: .cancel) { }
         } message: {
             Text("Möchten Sie den gesamten Chat-Verlauf löschen? Diese Aktion kann nicht rückgängig gemacht werden.")
